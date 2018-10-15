@@ -22,8 +22,8 @@ from keras import metrics
 
 def train_models_on_samples(X_train, y_train, X_val, y_val, models,
                             nr_epochs=5, subset_size=100, verbose=True, outputfile=None,
-                            model_path=None, early_stopping=False,
-                            batch_size=20, metric='accuracy'):
+                            model_path=None, early_stopping=True,
+                            batch_size=20, metrics=['accuracy']):
     """
     Given a list of compiled models, this function trains
     them all on a subset of the train data. If the given size of the subset is
@@ -71,7 +71,7 @@ def train_models_on_samples(X_train, y_train, X_val, y_val, models,
     X_train_sub = X_train[:subset_size, :, :]
     y_train_sub = y_train[:subset_size, :]
 
-    metric_name = get_metric_name(metric)
+    metric_name = get_metric_name(metrics[0])
 
     histories = []
     val_metrics = []
@@ -85,7 +85,7 @@ def train_models_on_samples(X_train, y_train, X_val, y_val, models,
                 'Invalid metric. The model was not compiled with {} as metric'.format(metric_name))
         if early_stopping:
             callbacks = [
-                EarlyStopping(monitor='val_loss', patience=0, verbose=verbose, mode='auto')]
+                EarlyStopping(monitor='val_loss', patience=5, verbose=verbose, mode='auto')]
         else:
             callbacks = []
         history = model.fit(X_train_sub, y_train_sub,
@@ -149,7 +149,7 @@ def store_train_hist_as_json(params, model_type, history, outputfile, metric_nam
 
 def find_best_architecture(X_train, y_train, X_val, y_val, verbose=True,
                            number_of_models=5, nr_epochs=5, subset_size=100,
-                           outputpath=None, model_path=None, metric='accuracy',
+                           outputpath=None, model_path=None, metrics=['accuracy'], early_stopping=True, 
                            **kwargs):
     """
     Tries out a number of models on a subsample of the data,
@@ -202,7 +202,7 @@ def find_best_architecture(X_train, y_train, X_val, y_val, verbose=True,
     """
     models = modelgen.generate_models(X_train.shape, y_train.shape[1],
                                       number_of_models=number_of_models,
-                                      metrics=[metric],
+                                      metrics=metrics,
                                       **kwargs)
     histories, val_accuracies, val_losses = train_models_on_samples(X_train,
                                                                     y_train,
@@ -214,7 +214,8 @@ def find_best_architecture(X_train, y_train, X_val, y_val, verbose=True,
                                                                     verbose=verbose,
                                                                     outputfile=outputpath,
                                                                     model_path=model_path,
-                                                                    metric=metric)
+                                                                    metrics=metrics,
+                                                                    early_stopping=early_stopping)
     best_model_index = np.argmax(val_accuracies)
     best_model, best_params, best_model_type = models[best_model_index]
     knn_acc = kNN_accuracy(
@@ -223,7 +224,7 @@ def find_best_architecture(X_train, y_train, X_val, y_val, verbose=True,
         print('Best model: model ', best_model_index)
         print('Model type: ', best_model_type)
         print('Hyperparameters: ', best_params)
-        print(str(metric) + ' on validation set: ',
+        print(str(metrics[0]) + ' on validation set: ',
               val_accuracies[best_model_index])
         print('Accuracy of kNN on validation set', knn_acc)
 
