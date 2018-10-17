@@ -97,7 +97,7 @@ def generate_models(
                 min_filters=cnn_min_filters, max_filters=cnn_max_filters,
                 min_fc_nodes=cnn_min_fc_nodes, max_fc_nodes=cnn_max_fc_nodes,
                 low_lr=low_lr, high_lr=high_lr, low_reg=low_reg,
-                high_reg=high_reg)
+                high_reg=high_reg, dropouts=[0.0, 0.5])
         if current_model_type == 'DeepConvLSTM':
             generate_model = generate_DeepConvLSTM_model
             hyperparameters = generate_DeepConvLSTM_hyperparameter_set(
@@ -193,7 +193,7 @@ def generate_DeepConvLSTM_model(
 
 def generate_CNN_model(x_shape, class_number, filters, fc_hidden_nodes,
                        learning_rate=0.01, regularization_rate=0.01,
-                       metrics=['accuracy']):
+                       metrics=['accuracy'], dropout = 0.5):
     """
     Generate a convolutional neural network (CNN) model.
 
@@ -238,15 +238,15 @@ def generate_CNN_model(x_shape, class_number, filters, fc_hidden_nodes,
                                 kernel_initializer=weightinit))
         model.add(BatchNormalization())
         model.add(Activation('relu'))
-        model.add(Dropout(0.3))
+        model.add(Dropout(dropout))
     model.add(Flatten())
     model.add(Dense(units=fc_hidden_nodes,
                     kernel_regularizer=l2(regularization_rate),
                     kernel_initializer=weightinit))  # Fully connected layer
     model.add(Activation('relu'))  # Relu activation
-    model.add(Dropout(0.5))
+    model.add(Dropout(dropout))
     model.add(Dense(units=outputdim, kernel_initializer=weightinit))
-    model.add(Dropout(0.5))
+    model.add(Dropout(dropout))
     model.add(BatchNormalization())
     model.add(Activation("softmax"))  # Final classification layer
 
@@ -261,7 +261,7 @@ def generate_CNN_hyperparameter_set(min_layers=1, max_layers=10,
                                     min_filters=10, max_filters=100,
                                     min_fc_nodes=10, max_fc_nodes=2000,
                                     low_lr=1, high_lr=4, low_reg=1,
-                                    high_reg=4):
+                                    high_reg=4, dropouts=[0.0, 0.5]):
     """ Generate a hyperparameter set that define a CNN model.
 
     Parameters
@@ -303,6 +303,7 @@ def generate_CNN_hyperparameter_set(min_layers=1, max_layers=10,
         min_filters, max_filters + 1, number_of_layers)
     hyperparameters['fc_hidden_nodes'] = np.random.randint(
         min_fc_nodes, max_fc_nodes + 1)
+    hyperparameters['dropout'] = np.random.uniform(dropouts[0], dropouts[1])
     return hyperparameters
 
 
