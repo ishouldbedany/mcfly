@@ -238,12 +238,15 @@ def generate_CNN_model(x_shape, class_number, filters, fc_hidden_nodes,
                                 kernel_initializer=weightinit))
         model.add(BatchNormalization())
         model.add(Activation('relu'))
+        model.add(Dropout(0.3))
     model.add(Flatten())
     model.add(Dense(units=fc_hidden_nodes,
                     kernel_regularizer=l2(regularization_rate),
                     kernel_initializer=weightinit))  # Fully connected layer
     model.add(Activation('relu'))  # Relu activation
+    model.add(Dropout(0.5))
     model.add(Dense(units=outputdim, kernel_initializer=weightinit))
+    model.add(Dropout(0.5))
     model.add(BatchNormalization())
     model.add(Activation("softmax"))  # Final classification layer
 
